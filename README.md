@@ -22,6 +22,7 @@ Script en Bash para **detectar y corregir nombres de ficheros y directorios** co
 - ⚠️ **Aviso de bytes no-ASCII** que sobrevivan a la limpieza (emojis, griego, cirílico…).
 - 🧱 **Soporta espacios, saltos de línea y nombres que empiezan por `-`** gracias a `find -print0`, `read -d ''` y `mv --`.
 - 🧭 **`-depth`**: renombra primero los hijos y luego los directorios padre, evitando romper rutas.
+- ↩️ **Modo `--revert`**: deshace los renombrados usando el log, en orden inverso.
 
 ---
 
@@ -58,7 +59,7 @@ Si `uconv` no está instalado, el script funciona igual usando `iconv` como fall
 
 ```bash
 # 1. Clona el repositorio
-git clone https://github.com/egantz09/fix-nombres.git
+git clone https://github.com/tu-usuario/fix-nombres.git
 cd fix-nombres
 
 # 2. Da permisos de ejecución
@@ -81,6 +82,18 @@ sudo mv fix-nombres.sh /usr/local/bin/fix-nombres
 
 # Aplicar los cambios
 ./fix-nombres.sh --apply /ruta/a/musica
+
+# Deshacer usando el log más reciente (dry-run)
+./fix-nombres.sh --revert
+
+# Deshacer usando un log concreto (dry-run)
+./fix-nombres.sh --revert renombres_20260922_174123.log
+
+# Aplicar el revert
+./fix-nombres.sh --revert --apply
+
+# Aplicar el revert con log concreto
+./fix-nombres.sh --revert renombres_20260922_174123.log --apply
 
 # Ver la ayuda
 ./fix-nombres.sh --help
@@ -157,6 +170,59 @@ Los caracteres **no cubiertos** (emojis, símbolos) se dejan tal cual y se **rep
 
 ---
 
+## ↩️ Revertir cambios
+
+El script guarda en el log una línea por cada renombrado exitoso, con el formato:
+
+```
+RENAME|<origen>|<destino>
+```
+
+Eso permite **deshacer** los cambios con `--revert`. Por defecto es dry-run; hay que
+combinarlo con `--apply` para aplicarlo de verdad.
+
+```bash
+# Ver qué se revertiría usando el log más reciente
+./fix-nombres.sh --revert
+
+# Ver qué se revertiría usando un log concreto
+./fix-nombres.sh --revert renombres_20260922_174123.log
+
+# Aplicar el revert
+./fix-nombres.sh --revert --apply
+```
+
+### Ejemplo de salida (revert aplicado)
+
+```
+Registro de REVERT - Tue Sep 22 17:55:01 UTC 2026
+Log fuente: renombres_20260922_174123.log
+Modo: APLICAR
+-----------------------------------------------
+🔄 Revertir:
+   Actual : /home/programacion/.../ALFABETO FAMILIAR (Produccion para Internet)
+   Volver : /home/programacion/.../ALFABETO FAMILIAR (Producci�n para Internet)
+   ✅ Revertido.
+
+-----------------------------------------------
+Resumen (REVERT APLICADO):
+  ↩️  Revertidos        : 3
+  ⏭️  Omitidos           : 0
+  ❌ Errores            : 0
+✅ Proceso completado. Log: revert_20260922_175501.log
+```
+
+### Notas importantes
+
+- **Solo funciona con logs generados con `--apply`** por la versión que ya soporta
+  `--revert` (los logs antiguos no llevan marcadores `RENAME|` y se rechazan).
+- **No sobrescribe**: si el nombre original ya existe, se omite y se registra.
+- **Revertir directorios**: se procesan en orden inverso (primero los hijos,
+  luego los padres) para no romper rutas.
+- Cada revert genera un log nuevo `revert_YYYYMMDD_HHMMSS.log`.
+
+---
+
 ## 🧪 Probar con el script de test
 
 El repositorio incluye `test-fix-nombres.sh`, que crea un entorno con casos problemáticos (acentos, ß, griego, cirílico, espacios múltiples, permisos denegados, colisiones) y ejecuta el script en dry-run y modo real:
@@ -178,12 +244,15 @@ fix-nombres/
 └── LICENSE                 # MIT (opcional)
 ```
 
+Los logs generados (`renombres_*.log` y `revert_*.log`) están ignorados por
+`.gitignore` y no se suben al repositorio.
+
 ---
 
 ## ⚠️ Limitaciones
 
 - **No es un renombrador en masa con regex**: solo normaliza acentos y caracteres corruptos.
-- **No revierte cambios** automáticamente (aunque el log permite hacerlo manualmente).
+- **Solo revierte lo que el propio script renombró**, y solo si conservas el log correspondiente. No puede deshacer cambios manuales ni de otras herramientas.
 - **Requiere permisos** sobre los directorios afectados para renombrar.
 - **Límite del sistema de archivos**: nombres de más de 255 bytes o rutas de más de 4096 bytes fallarán (`ENAMETOOLONG`), y se registrará en el log.
 - **Emojis y alfabetos no cubiertos por ICU** permanecen (se avisa con `⚠️`).
@@ -192,7 +261,7 @@ fix-nombres/
 
 ## 🗺️ Roadmap / Ideas futuras
 
-- [ ] Flag `--revert` para deshacer usando el log.
+- [x] Flag `--revert` para deshacer usando el log.
 - [ ] `--exclude` para ignorar carpetas (`.git`, `node_modules`, etc.).
 - [ ] Modo `--interactive` (preguntar uno a uno).
 - [ ] Opción `--collapse-spaces` para normalizar espacios múltiples.
