@@ -58,7 +58,7 @@ Si `uconv` no está instalado, el script funciona igual usando `iconv` como fall
 
 ```bash
 # 1. Clona el repositorio
-git clone https://github.com/tu-usuario/fix-nombres.git
+git clone https://github.com/egantz09/fix-nombres.git
 cd fix-nombres
 
 # 2. Da permisos de ejecución
