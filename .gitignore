@@ -1,0 +1,11 @@
+# Logs generados por el script
+renombres_*.log
+*.log
+
+# Backups de editores
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
