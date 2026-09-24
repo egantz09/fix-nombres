@@ -1,10 +1,10 @@
 # fix-nombres.sh
 
-Script en Bash para **detectar y corregir nombres de ficheros y directorios** con caracteres corruptos, acentos, diéresis y otros caracteres especiales. Ideal para limpiar bibliotecas de música, fotos, documentales o cualquier colección de archivos heredada de sistemas con codificaciones mixtas (ZIP, FAT, descargas antiguas, etc.).
+[![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-blue)](https://www.gnu.org/software/bash/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20WSL-lightgrey)](#)
 
-![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
+Script en Bash para **detectar y corregir nombres de ficheros y directorios** con caracteres corruptos, acentos, diéresis y otros caracteres especiales. Ideal para limpiar bibliotecas de música, fotos, documentales o cualquier colección de archivos heredada de sistemas con codificaciones mixtas (ZIP, FAT, descargas antiguas, etc.).
 
 ---
 
@@ -20,9 +20,9 @@ Script en Bash para **detectar y corregir nombres de ficheros y directorios** co
 - 🧪 **Modo dry-run por defecto**: no modifica nada hasta que uses `--apply`.
 - 🕓 **Contador de pendientes** en dry-run, para saber cuántos nombres se renombrarían.
 - ⚠️ **Aviso de bytes no-ASCII** que sobrevivan a la limpieza (emojis, griego, cirílico…).
+- ↩️ **Modo `--revert`**: deshace los renombrados usando el log, en orden inverso.
 - 🧱 **Soporta espacios, saltos de línea y nombres que empiezan por `-`** gracias a `find -print0`, `read -d ''` y `mv --`.
 - 🧭 **`-depth`**: renombra primero los hijos y luego los directorios padre, evitando romper rutas.
-- ↩️ **Modo `--revert`**: deshace los renombrados usando el log, en orden inverso.
 
 ---
 
@@ -59,7 +59,7 @@ Si `uconv` no está instalado, el script funciona igual usando `iconv` como fall
 
 ```bash
 # 1. Clona el repositorio
-git clone https://github.com/tu-usuario/fix-nombres.git
+git clone https://github.com/egantz09/fix-nombres.git
 cd fix-nombres
 
 # 2. Da permisos de ejecución
@@ -150,7 +150,7 @@ Resumen (APLICADO):
 | Griego (con uconv) | `Μουσική.mp3` | `Mousike.mp3` |
 | Cirílico (con uconv) | `Музыка.mp3` | `Muzyka.mp3` |
 
-Los caracteres **no cubiertos** (emojis, símbolos) se dejan tal cual y se **reportan como aviso** en el log para que decidas si actuar manualmente.
+Los caracteres **no cubiertos** (emojis, símbolos, alfabetos no latinos sin `uconv`) se dejan tal cual y se **reportan como aviso** en el log para que decidas si actuar manualmente.
 
 ---
 
@@ -178,8 +178,7 @@ El script guarda en el log una línea por cada renombrado exitoso, con el format
 RENAME|<origen>|<destino>
 ```
 
-Eso permite **deshacer** los cambios con `--revert`. Por defecto es dry-run; hay que
-combinarlo con `--apply` para aplicarlo de verdad.
+Eso permite **deshacer** los cambios con `--revert`. Por defecto es dry-run; hay que combinarlo con `--apply` para aplicarlo de verdad.
 
 ```bash
 # Ver qué se revertiría usando el log más reciente
@@ -214,18 +213,16 @@ Resumen (REVERT APLICADO):
 
 ### Notas importantes
 
-- **Solo funciona con logs generados con `--apply`** por la versión que ya soporta
-  `--revert` (los logs antiguos no llevan marcadores `RENAME|` y se rechazan).
+- **Solo funciona con logs generados con `--apply`** por la versión que ya soporta `--revert` (los logs antiguos no llevan marcadores `RENAME|` y se rechazan).
 - **No sobrescribe**: si el nombre original ya existe, se omite y se registra.
-- **Revertir directorios**: se procesan en orden inverso (primero los hijos,
-  luego los padres) para no romper rutas.
+- **Revertir directorios**: se procesan en orden inverso (primero los hijos, luego los padres) para no romper rutas.
 - Cada revert genera un log nuevo `revert_YYYYMMDD_HHMMSS.log`.
 
 ---
 
 ## 🧪 Probar con el script de test
 
-El repositorio incluye `test-fix-nombres.sh`, que crea un entorno con casos problemáticos (acentos, ß, griego, cirílico, espacios múltiples, permisos denegados, colisiones) y ejecuta el script en dry-run y modo real:
+El repositorio incluye `test-fix-nombres.sh`, que crea un entorno con casos problemáticos (acentos, `ß`, griego, cirílico, espacios múltiples, permisos denegados, colisiones) y ejecuta el script en dry-run y modo real:
 
 ```bash
 chmod +x test-fix-nombres.sh
@@ -241,11 +238,10 @@ fix-nombres/
 ├── fix-nombres.sh          # Script principal
 ├── test-fix-nombres.sh     # Entorno de prueba con casos variados
 ├── README.md               # Este archivo
-└── LICENSE                 # MIT (opcional)
+└── LICENSE                 # MIT
 ```
 
-Los logs generados (`renombres_*.log` y `revert_*.log`) están ignorados por
-`.gitignore` y no se suben al repositorio.
+Los logs generados (`renombres_*.log` y `revert_*.log`) están ignorados por `.gitignore` y no se suben al repositorio.
 
 ---
 
@@ -284,7 +280,7 @@ Las contribuciones y sugerencias son bienvenidas vía *issues* o *pull requests*
 
 ## 📄 Licencia
 
-Distribuido bajo la licencia **MIT**. Consulta `LICENSE` para más información.
+Distribuido bajo la licencia **MIT**. Consulta [`LICENSE`](LICENSE) para más información.
 
 ---
 
